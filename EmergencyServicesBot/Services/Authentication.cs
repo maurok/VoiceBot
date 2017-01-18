@@ -5,6 +5,7 @@
     using System.Net.Http;
     using System.Threading;
     using System.Web.Configuration;
+    using Microsoft.IdentityModel.Protocols;
     using Newtonsoft.Json;
 
     public sealed class Authentication
@@ -57,21 +58,17 @@
         {
             using (var client = new HttpClient())
             {
-                var values = new Dictionary<string, string>
-                {
-                    { "grant_type", "client_credentials" },
-                    { "client_id", ApiKey },
-                    { "client_secret", ApiKey },
-                    { "scope", "https://speech.platform.bing.com" }
-                };
+                var content = new StringContent(string.Empty);
+                content.Headers.Add("Ocp-Apim-Subscription-Key", ApiKey);
 
-                var content = new FormUrlEncodedContent(values);
-
-                var response = client.PostAsync("https://oxford-speech.cloudapp.net/token/issueToken", content).Result;
+                var response = client.PostAsync("https://api.cognitive.microsoft.com/sts/v1.0/issueToken", content).Result;
 
                 var responseString = response.Content.ReadAsStringAsync().Result;
 
-                return JsonConvert.DeserializeObject<AccessTokenInfo>(responseString);
+                return new AccessTokenInfo
+                {
+                    access_token = responseString
+                };
             }
         }
 
