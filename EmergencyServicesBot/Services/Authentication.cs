@@ -30,13 +30,18 @@
         /// Gets the current access token.
         /// </summary>
         /// <returns>Current access token</returns>
-        public AccessTokenInfo GetAccessToken()
+        public AccessTokenInfo GetAccessToken(bool forceRefresh = false)
         {
             // Token will be null first time the function is called.
             if (this.token == null)
             {
                 lock (LockObject)
                 {
+                    if (forceRefresh)
+                    {
+                        this.token = null;
+                    }
+
                     // This condition will be true only once in the lifetime of the application
                     if (this.token == null)
                     {
@@ -89,17 +94,14 @@
             this.timer = new Timer(
                 x => this.RefreshToken(),
                 null,
-                GetExpirationTimer(this.token.expires_in).Subtract(TimeSpan.FromMinutes(1)), // Specifies the delay before RefreshToken is invoked.
+                CalculateDueTimeForTimer(this.token.expires_in), // Specifies the delay before RefreshToken is invoked.
                 TimeSpan.FromMilliseconds(-1)); // Indicates that this function will only run once
         }
 
-        private static TimeSpan GetExpirationTimer(int secondsFromEpoch)
+        private static TimeSpan CalculateDueTimeForTimer(int secondsFromEpoch)
         {
-            DateTime origin = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-            DateTime target = origin.AddSeconds(secondsFromEpoch);
-
-            var ts = target - DateTime.UtcNow;
-            return ts;
+            DateTime dueTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(secondsFromEpoch);
+            return (dueTime - DateTime.UtcNow).Subtract(TimeSpan.FromMinutes(1));
         }
     }
 }
