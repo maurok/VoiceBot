@@ -5,6 +5,7 @@
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
+    using System.Net;
     using System.Net.Http;
     using System.Threading;
     using System.Threading.Tasks;
@@ -23,12 +24,25 @@
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
         private readonly Task recognitionResultAck = Task.FromResult(true);
 
-        public async Task<string> GetTextAsync(Stream audioStream)
+        private readonly CognitiveServicesAuthorizationProvider authorizationProvider = new CognitiveServicesAuthorizationProvider();
+
+        public async Task<string> GetTextAsync(Stream audioStream, int retryCount = 0)
         {
+            // if we are retrying then refresh auth token, but do not retry more than once
+            if (retryCount > 0)
+            {
+                await authorizationProvider.RefreshAuthorizationTokenAsync();
+
+                if (retryCount > 1)
+                {
+                    return string.Empty;
+                }
+            }
+
             var tcs = new TaskCompletionSource<string>();
 
             // create the preferences object
-            var preferences = new Preferences(DefaultLocale, LongDictationUrl, new CognitiveServicesAuthorizationProvider());
+            var preferences = new Preferences(DefaultLocale, LongDictationUrl, authorizationProvider);
 
             // Create a a speech client
             using (var speechClient = new SpeechClient(preferences))
@@ -72,7 +86,21 @@
                 var applicationMetadata = new ApplicationMetadata("SampleApp", "1.0.0");
                 var requestMetadata = new RequestMetadata(Guid.NewGuid(), deviceMetadata, applicationMetadata, "SampleAppService");
 
-                await speechClient.RecognizeAsync(new SpeechInput(audioStream, requestMetadata), this.cts.Token).ConfigureAwait(false);
+                try
+                {
+                    await speechClient.RecognizeAsync(new SpeechInput(audioStream, requestMetadata), this.cts.Token).ConfigureAwait(false);
+                }
+                catch (WebException e)
+                {
+                    if (e.Response is HttpWebResponse && ((HttpWebResponse)e.Response).StatusCode == HttpStatusCode.Forbidden)
+                    {
+                        tcs.SetResult(await this.GetTextAsync(audioStream, ++retryCount));
+                    }
+                    else
+                    {
+                        tcs.SetResult(string.Empty);
+                    }
+                }
             }
 
             return await tcs.Task;
@@ -116,7 +144,7 @@
                         var response = await client.PostAsync(requestUri, binaryContent);
                         if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
                         {
-                            return await GetTextFromAudioAsync(audiostream, ++retryCount);
+                            return await this.GetTextFromAudioAsync(audiostream, ++retryCount);
                         }
 
                         var responseString = await response.Content.ReadAsStringAsync();
