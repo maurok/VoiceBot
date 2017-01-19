@@ -168,7 +168,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\AccessTokenInfo.cs" />
     <Compile Include="Services\Authentication.cs" />
-    <Compile Include="Services\AuthorisationProvider.cs" />
+    <Compile Include="Services\AuthorizationProvider.cs" />
     <Compile Include="Services\MSCognitiveSpeechService.cs" />
   </ItemGroup>
   <ItemGroup>
