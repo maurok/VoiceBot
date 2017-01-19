@@ -41,7 +41,7 @@
                 {
                     if (forceRefresh || this.token == null)
                     {
-                        await this.RefreshTokenAsync();
+                        this.token = await GetNewTokenAsync();
                     }
                 }
                 finally
@@ -85,18 +85,16 @@
         /// Refreshes the current token before it expires. This method will refresh the current access token.
         /// It will also schedule itself to run again before the newly acquired token's expiry by one minute.
         /// </summary>
-        private async Task RefreshTokenAsync()
-        {
-            // TODO: Better check 403 on request and renew there (remove timer)?
-
-            this.token = await GetNewTokenAsync();
-            //this.timer?.Dispose();
-            //this.timer = new Timer(
-            //    async x => await this.RefreshTokenAsync(),
-            //    null,
-            //    CalculateDueTimeForTimer(this.token.expires_in), // Specifies the delay before RefreshToken is invoked.
-            //    TimeSpan.FromMilliseconds(-1)); // Indicates that this function will only run once
-        }
+        //private async Task RefreshTokenAsync()
+        //{
+        //    this.token = await GetNewTokenAsync();
+        //    this.timer?.Dispose();
+        //    this.timer = new Timer(
+        //        async x => await this.RefreshTokenAsync(),
+        //        null,
+        //        CalculateDueTimeForTimer(this.token.expires_in), // Specifies the delay before RefreshToken is invoked.
+        //        TimeSpan.FromMilliseconds(-1)); // Indicates that this function will only run once
+        //}
 
         //private static TimeSpan CalculateDueTimeForTimer(int secondsFromEpoch)
         //{
