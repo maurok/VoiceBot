@@ -31,12 +31,12 @@
             // if we are retrying then refresh auth token, but do not retry more than once
             if (retryCount > 0)
             {
-                await authorizationProvider.RefreshAuthorizationTokenAsync();
-
                 if (retryCount > 1)
                 {
                     return string.Empty;
                 }
+
+                await authorizationProvider.RefreshAuthorizationTokenAsync();
             }
 
             var tcs = new TaskCompletionSource<string>();
@@ -70,7 +70,7 @@
                         recognizedPhrases.Add(phrase.DisplayText);
 
                         // TODO: how to know when recognition finished?
-                        // actions: track some elapsed time? - check other API available?
+                        // actions: track some elapsed time? check other API available?
                         // for now send back first sentence recognized and do not process others
                         if (!TaskStatus.RanToCompletion.Equals(tcs.Task.Status))
                         {
@@ -122,12 +122,12 @@
             // if we are retrying then refresh auth token, but do not retry more than once
             if (retryCount > 0)
             {
-                await Authentication.Instance.GetAccessTokenAsync(true);
-
                 if (retryCount > 1)
                 {
                     return string.Empty;
                 }
+
+                await Authentication.Instance.GetAccessTokenAsync(true);
             }
 
             using (var client = new HttpClient())
