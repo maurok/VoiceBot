@@ -5,18 +5,18 @@
     using System.Linq;
     using System.Net.Http;
     using System.Threading;
+    using System.Threading.Tasks;
     using System.Web.Configuration;
 
     public sealed class Authentication
     {
-        private static readonly object LockObject;
         private static readonly string ApiKey;
         private AccessTokenInfo token;
+        private ManualResetEvent tokenRefreshing = new ManualResetEvent(true);
         private Timer timer;
 
         static Authentication()
         {
-            LockObject = new object();
             ApiKey = WebConfigurationManager.AppSettings["MicrosoftSpeechApiKey"];
         }
 
@@ -30,23 +30,24 @@
         /// Gets the current access token.
         /// </summary>
         /// <returns>Current access token</returns>
-        public AccessTokenInfo GetAccessToken(bool forceRefresh = false)
+        public async Task<AccessTokenInfo> GetAccessTokenAsync(bool forceRefresh = false)
         {
             // Token will be null first time the function is called.
             if (this.token == null)
             {
-                lock (LockObject)
-                {
-                    if (forceRefresh)
-                    {
-                        this.token = null;
-                    }
+                tokenRefreshing.WaitOne();
 
-                    // This condition will be true only once in the lifetime of the application
-                    if (this.token == null)
+                tokenRefreshing.Set();
+                try
+                {
+                    if (forceRefresh || this.token == null)
                     {
-                        this.RefreshToken();
+                        await this.RefreshTokenAsync();
                     }
+                }
+                finally
+                {
+                    tokenRefreshing.Reset();
                 }
             }
 
@@ -58,16 +59,16 @@
         /// </summary>
         /// This method couldn't be async because we are calling it inside of a lock.
         /// <returns>AccessToken</returns>
-        private AccessTokenInfo GetNewToken()
+        private async Task<AccessTokenInfo> GetNewTokenAsync()
         {
             using (var client = new HttpClient())
             {
                 var content = new StringContent(string.Empty);
                 content.Headers.Add("Ocp-Apim-Subscription-Key", ApiKey);
 
-                var response = client.PostAsync("https://api.cognitive.microsoft.com/sts/v1.0/issueToken", content).Result;
+                var response = await client.PostAsync("https://api.cognitive.microsoft.com/sts/v1.0/issueToken", content);
 
-                var jwtToken = response.Content.ReadAsStringAsync().Result;
+                var jwtToken = await response.Content.ReadAsStringAsync();
 
                 var tokenDetails = new JwtSecurityTokenHandler().ReadToken(jwtToken) as JwtSecurityToken;
 
@@ -85,14 +86,14 @@
         /// Refreshes the current token before it expires. This method will refresh the current access token.
         /// It will also schedule itself to run again before the newly acquired token's expiry by one minute.
         /// </summary>
-        private void RefreshToken()
+        private async Task RefreshTokenAsync()
         {
             // TODO: Better check 403 on request and renew there (remove timer)?
 
-            this.token = GetNewToken();
+            this.token = await GetNewTokenAsync();
             this.timer?.Dispose();
             this.timer = new Timer(
-                x => this.RefreshToken(),
+                async x => await this.RefreshTokenAsync(),
                 null,
                 CalculateDueTimeForTimer(this.token.expires_in), // Specifies the delay before RefreshToken is invoked.
                 TimeSpan.FromMilliseconds(-1)); // Indicates that this function will only run once
