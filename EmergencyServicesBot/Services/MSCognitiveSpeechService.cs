@@ -22,9 +22,9 @@
         private static readonly Uri LongDictationUrl = new Uri(@"wss://speech.platform.bing.com/api/service/recognition/continuous");
 
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
-        private readonly Task recognitionResultAck = Task.FromResult(true);
 
         private readonly CognitiveServicesAuthorizationProvider authorizationProvider = new CognitiveServicesAuthorizationProvider();
+        private readonly Task recognitionResultAck = Task.FromResult(true);
 
         public async Task<string> GetTextAsync(Stream audioStream, int retryCount = 0)
         {
@@ -68,14 +68,6 @@
 
                         // store recognized phrases here to return all when finished
                         recognizedPhrases.Add(phrase.DisplayText);
-
-                        // TODO: how to know when recognition finished?
-                        // actions: track some elapsed time? check other API available?
-                        // for now send back first sentence recognized and do not process others
-                        if (!TaskStatus.RanToCompletion.Equals(tcs.Task.Status))
-                        {
-                            tcs.SetResult(string.Join(string.Empty, recognizedPhrases.ToArray()));
-                        }
                     }
 
                     return recognitionResultAck;
@@ -89,6 +81,9 @@
                 try
                 {
                     await speechClient.RecognizeAsync(new SpeechInput(audioStream, requestMetadata), this.cts.Token).ConfigureAwait(false);
+
+                    // send back recognized phrases
+                    tcs.SetResult(string.Join(string.Empty, recognizedPhrases.ToArray()));
                 }
                 catch (WebException e)
                 {
