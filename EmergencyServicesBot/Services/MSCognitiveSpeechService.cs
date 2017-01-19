@@ -23,7 +23,7 @@
             // if we are retrying then refresh auth token, but do not retry more than once
             if (retryCount > 0)
             {
-                Authentication.Instance.GetAccessToken(true);
+                await Authentication.Instance.GetAccessTokenAsync(true);
 
                 if (retryCount > 1)
                 {
@@ -34,7 +34,7 @@
             using (var client = new HttpClient())
             {
                 client.BaseAddress = new Uri("https://speech.platform.bing.com");
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + Authentication.Instance.GetAccessToken());
+                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + await Authentication.Instance.GetAccessTokenAsync());
 
                 try
                 {
