@@ -20,10 +20,17 @@ namespace EmergencyServicesBot
         private const string Support = "2";
 
         // Response messages depending on user selection
-        private const string Message_Welcome = "Hello, you have successfully contacted the Emergency Services Bot.";
-        private const string Message_MainMenuPrompt = "If you have a life threatening medical emergency please contact the emergency services or go to your nearest hospital.  For non-life threatening situations please press 2.";
-        private const string Message_NoConsultants = "Whilst we wait to connect you, please leave your name and a description of your problem. You can press the hash key when finished. We will call you as soon as possible.";
-        private const string Message_Ending = "Thank you for leaving the message, goodbye";
+        //private const string Message_Welcome = "Hello, you have successfully contacted the Emergency Services Bot.";
+        private const string Message_Welcome = "Hello";
+
+        //private const string Message_MainMenuPrompt = "If you have a life threatening medical emergency please contact the emergency services or go to your nearest hospital.  For non-life threatening situations please press 2.";
+        private const string Message_MainMenuPrompt = "Press 2";
+
+        //private const string Message_NoConsultants = "Whilst we wait to connect you, please leave your name and a description of your problem. You can press the hash key when finished. We will call you as soon as possible.";
+        private const string Message_NoConsultants = "Leave a message";
+
+        //private const string Message_Ending = "Thank you for leaving the message, goodbye";
+        private const string Message_Ending = "Thank you";
 
         public IEnumerable<Participant> Participants { get; set; }
         private readonly Dictionary<string, CallState> _callStateMap = new Dictionary<string, CallState>();
