@@ -13,7 +13,6 @@
         private static readonly string ApiKey;
         private AccessTokenInfo token;
         private ManualResetEvent tokenRefreshing = new ManualResetEvent(true);
-        private Timer timer;
 
         static Authentication()
         {
@@ -22,10 +21,6 @@
 
         private Authentication()
         {
-            this.token = new AccessTokenInfo
-            {
-                access_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzY29wZSI6Imh0dHBzOi8vc3BlZWNoLnBsYXRmb3JtLmJpbmcuY29tIiwic3Vic2NyaXB0aW9uLWlkIjoiOTJlN2FmMmEzMWE0NDk5OGE2MTk0ZTcyZDYzOGVmYTIiLCJwcm9kdWN0LWlkIjoiQmluZy5TcGVlY2guUHJldmlldyIsImNvZ25pdGl2ZS1zZXJ2aWNlcy1lbmRwb2ludCI6Imh0dHBzOi8vYXBpLmNvZ25pdGl2ZS5taWNyb3NvZnQuY29tL2ludGVybmFsL3YxLjAvIiwiYXp1cmUtcmVzb3VyY2UtaWQiOiIiLCJpc3MiOiJ1cm46bXMuY29nbml0aXZlc2VydmljZXMiLCJhdWQiOiJ1cm46bXMuc3BlZWNoIiwiZXhwIjoxNDg0ODMyNDg4fQ.RqXpqvtr_sFYylx_Ye1Z3spCZLsMRTwE9nWyjfjVp5c"
-            };
         }
 
         public static Authentication Instance { get; } = new Authentication();
@@ -95,18 +90,18 @@
             // TODO: Better check 403 on request and renew there (remove timer)?
 
             this.token = await GetNewTokenAsync();
-            this.timer?.Dispose();
-            this.timer = new Timer(
-                async x => await this.RefreshTokenAsync(),
-                null,
-                CalculateDueTimeForTimer(this.token.expires_in), // Specifies the delay before RefreshToken is invoked.
-                TimeSpan.FromMilliseconds(-1)); // Indicates that this function will only run once
+            //this.timer?.Dispose();
+            //this.timer = new Timer(
+            //    async x => await this.RefreshTokenAsync(),
+            //    null,
+            //    CalculateDueTimeForTimer(this.token.expires_in), // Specifies the delay before RefreshToken is invoked.
+            //    TimeSpan.FromMilliseconds(-1)); // Indicates that this function will only run once
         }
 
-        private static TimeSpan CalculateDueTimeForTimer(int secondsFromEpoch)
-        {
-            DateTime dueTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(secondsFromEpoch);
-            return (dueTime - DateTime.UtcNow).Subtract(TimeSpan.FromMinutes(1));
-        }
+        //private static TimeSpan CalculateDueTimeForTimer(int secondsFromEpoch)
+        //{
+        //    DateTime dueTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(secondsFromEpoch);
+        //    return (dueTime - DateTime.UtcNow).Subtract(TimeSpan.FromMinutes(1));
+        //}
     }
 }
