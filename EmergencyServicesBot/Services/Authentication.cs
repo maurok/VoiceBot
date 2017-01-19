@@ -1,12 +1,11 @@
 ﻿namespace EmergencyServicesBot
 {
     using System;
-    using System.Collections.Generic;
+    using System.IdentityModel.Tokens;
+    using System.Linq;
     using System.Net.Http;
     using System.Threading;
     using System.Web.Configuration;
-    using Microsoft.IdentityModel.Protocols;
-    using Newtonsoft.Json;
 
     public sealed class Authentication
     {
@@ -54,7 +53,7 @@
         /// </summary>
         /// This method couldn't be async because we are calling it inside of a lock.
         /// <returns>AccessToken</returns>
-        private static AccessTokenInfo GetNewToken()
+        private AccessTokenInfo GetNewToken()
         {
             using (var client = new HttpClient())
             {
@@ -63,11 +62,16 @@
 
                 var response = client.PostAsync("https://api.cognitive.microsoft.com/sts/v1.0/issueToken", content).Result;
 
-                var responseString = response.Content.ReadAsStringAsync().Result;
+                var jwtToken = response.Content.ReadAsStringAsync().Result;
+
+                var tokenDetails = new JwtSecurityTokenHandler().ReadToken(jwtToken) as JwtSecurityToken;
 
                 return new AccessTokenInfo
                 {
-                    access_token = responseString
+                    access_token = jwtToken,
+                    expires_in = Convert.ToInt32(tokenDetails.Claims.First(c => c.Type == "exp").Value),
+                    scope = tokenDetails.Claims.First(c => c.Type == "scope").Value,
+                    token_type = (string)tokenDetails.Header.First(h => h.Key == "typ").Value
                 };
             }
         }
@@ -78,13 +82,24 @@
         /// </summary>
         private void RefreshToken()
         {
+            // TODO: Better check 403 on request and renew there (remove timer)?
+
             this.token = GetNewToken();
             this.timer?.Dispose();
             this.timer = new Timer(
                 x => this.RefreshToken(),
                 null,
-                TimeSpan.FromSeconds(this.token.expires_in).Subtract(TimeSpan.FromMinutes(1)), // Specifies the delay before RefreshToken is invoked.
+                GetExpirationTimer(this.token.expires_in).Subtract(TimeSpan.FromMinutes(1)), // Specifies the delay before RefreshToken is invoked.
                 TimeSpan.FromMilliseconds(-1)); // Indicates that this function will only run once
+        }
+
+        private static TimeSpan GetExpirationTimer(int secondsFromEpoch)
+        {
+            DateTime origin = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            DateTime target = origin.AddSeconds(secondsFromEpoch);
+
+            var ts = target - DateTime.UtcNow;
+            return ts;
         }
     }
 }
