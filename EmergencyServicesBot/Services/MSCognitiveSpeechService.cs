@@ -55,7 +55,8 @@
                         // store recognized phrases here to return all when finished
                         recognizedPhrases.Add(phrase.DisplayText);
 
-                        // TODO: how to know when recognition finished? (track some elapsed time? - check API)
+                        // TODO: how to know when recognition finished?
+                        // actions: track some elapsed time? - check other API available?
                         // for now send back first sentence recognized and do not process others
                         if (!TaskStatus.RanToCompletion.Equals(tcs.Task.Status))
                         {

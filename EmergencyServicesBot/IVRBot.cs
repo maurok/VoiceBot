@@ -134,7 +134,12 @@ namespace EmergencyServicesBot
         /// <returns>Transcribed text. </returns>
         public async Task<string> GetTextFromAudioAsync(Stream audiostream)
         {
-            var text = await speechService.GetTextFromAudioAsync(audiostream);
+            //use bing ns
+            var text = await speechService.GetTextAsync(audiostream);
+
+            //use bing api
+            //var text = await speechService.GetTextFromAudioAsync(audiostream);
+
             Debug.WriteLine(text);
             return text;
         }
