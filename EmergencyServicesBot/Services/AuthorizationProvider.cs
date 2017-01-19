@@ -10,7 +10,6 @@
 // -----------------------------------------------------------------------
 
 namespace EmergencyServicesBot
-
 {
     using System.Threading.Tasks;
     using Microsoft.Bing.Speech;

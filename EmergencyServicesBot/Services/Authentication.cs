@@ -22,6 +22,10 @@
 
         private Authentication()
         {
+            this.token = new AccessTokenInfo
+            {
+                access_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzY29wZSI6Imh0dHBzOi8vc3BlZWNoLnBsYXRmb3JtLmJpbmcuY29tIiwic3Vic2NyaXB0aW9uLWlkIjoiOTJlN2FmMmEzMWE0NDk5OGE2MTk0ZTcyZDYzOGVmYTIiLCJwcm9kdWN0LWlkIjoiQmluZy5TcGVlY2guUHJldmlldyIsImNvZ25pdGl2ZS1zZXJ2aWNlcy1lbmRwb2ludCI6Imh0dHBzOi8vYXBpLmNvZ25pdGl2ZS5taWNyb3NvZnQuY29tL2ludGVybmFsL3YxLjAvIiwiYXp1cmUtcmVzb3VyY2UtaWQiOiIiLCJpc3MiOiJ1cm46bXMuY29nbml0aXZlc2VydmljZXMiLCJhdWQiOiJ1cm46bXMuc3BlZWNoIiwiZXhwIjoxNDg0ODMyNDg4fQ.RqXpqvtr_sFYylx_Ye1Z3spCZLsMRTwE9nWyjfjVp5c"
+            };
         }
 
         public static Authentication Instance { get; } = new Authentication();
@@ -33,7 +37,7 @@
         public async Task<AccessTokenInfo> GetAccessTokenAsync(bool forceRefresh = false)
         {
             // Token will be null first time the function is called.
-            if (this.token == null)
+            if (forceRefresh || this.token == null)
             {
                 tokenRefreshing.WaitOne();
 
