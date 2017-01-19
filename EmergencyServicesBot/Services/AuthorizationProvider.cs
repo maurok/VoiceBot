@@ -15,8 +15,6 @@ namespace EmergencyServicesBot
     using System.Threading.Tasks;
     using Microsoft.Bing.Speech;
 
-    // TODO: remove this class if we are not going to use Microsoft.Bing.Speech classes
-
     /// <summary>
     /// Cognitive Services Authorization Provider.
     /// </summary>
@@ -40,7 +38,12 @@ namespace EmergencyServicesBot
         /// </remarks>
         public async Task<string> GetAuthorizationTokenAsync()
         {
-            return (await Authentication.Instance.GetAccessTokenAsync(true)).access_token;
+            return (await Authentication.Instance.GetAccessTokenAsync()).access_token;
+        }
+
+        public async Task RefreshAuthorizationTokenAsync()
+        {
+            await Authentication.Instance.GetAccessTokenAsync(true);
         }
     }
 }
