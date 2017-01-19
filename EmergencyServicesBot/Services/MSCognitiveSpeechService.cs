@@ -9,6 +9,7 @@
     using System.Net.Http;
     using System.Threading;
     using System.Threading.Tasks;
+    using System.Web;
     using Microsoft.Bing.Speech;
     using Newtonsoft.Json;
 
@@ -38,8 +39,6 @@
 
                 await authorizationProvider.RefreshAuthorizationTokenAsync();
             }
-
-            var tcs = new TaskCompletionSource<string>();
 
             // create the preferences object
             var preferences = new Preferences(DefaultLocale, LongDictationUrl, authorizationProvider);
@@ -83,22 +82,20 @@
                     await speechClient.RecognizeAsync(new SpeechInput(audioStream, requestMetadata), this.cts.Token).ConfigureAwait(false);
 
                     // send back recognized phrases
-                    tcs.SetResult(string.Join(string.Empty, recognizedPhrases.ToArray()));
+                    return string.Join(string.Empty, recognizedPhrases.ToArray());
                 }
                 catch (WebException e)
                 {
                     if (e.Response is HttpWebResponse && ((HttpWebResponse)e.Response).StatusCode == HttpStatusCode.Forbidden)
                     {
-                        tcs.SetResult(await this.GetTextAsync(audioStream, ++retryCount));
+                        return await this.GetTextAsync(audioStream, ++retryCount);
                     }
                     else
                     {
-                        tcs.SetResult(string.Empty);
+                        return string.Empty;
                     }
                 }
             }
-
-            return await tcs.Task;
         }
         #endregion
 
